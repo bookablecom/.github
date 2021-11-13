@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker tag'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Helm deploy
+        id: helm-deploy
+        uses: deliverybot/helm@v1
+        with:
+          repository: 'https://bookablecom.github.io/helm-charts'
+          release: ${{ github.event.repository.name }}
+          namespace: 'default'
+          chart: 'spring-app'
+          token: '${{ github.token }}'
+          helm: helm3
+          values: |
+            replicaCount: 1
+            image:
+              repository: ghcr.io/bookablecom/${{ github.event.repository.name }}
+              tag: ${{ github.event.inputs.tag }}
+            name: ${{ github.event.repository.name }}
+            spring:
+              profiles:
+                active: default
+            ingress:
+              enabled: true
+              match: Host(`api.bsgrd.com`) && PathPrefix(`/users`)
+            livenessProbe:
+              enabled: true
+              initialDelaySeconds: 120
+            readinessProbe:
+              enabled: true
+              initialDelaySeconds: 120
+            configserver:
+              enabled: true
+              uri: "http://config-server.default.svc.cluster.local:8080"
+        env:
+          KUBECONFIG_FILE: '${{ secrets.KUBECONFIG }}'
