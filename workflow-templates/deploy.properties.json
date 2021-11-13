@@ -1,0 +1,8 @@
+{
+    "name": "Deploy to staging environment",
+    "description": "Deploy to staging environment",
+    "iconName": "example-icon",
+    "categories": [
+        "Java"
+    ]
+}
